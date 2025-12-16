@@ -1,4 +1,5 @@
 use std::io;
+use std::fs;
 
 struct Expense {
     name: String,
@@ -60,8 +61,39 @@ fn format_currency(amount: f64) -> String {
     result.chars().rev().collect()
 }
 
+fn save_to_file(expenses: &Vec<Expense>, filename: &str) {
+    let mut data = String::new();
+    for exp in expenses {
+        data.push_str(&format!("{},{},{}\n", exp.name, exp.amount, exp.category));
+    }
+    match fs::write(filename, data) {
+        Ok(_) => println!("Data saved to {}", filename),
+        Err(e) => println!("Failed to save data: {}", e),
+    }
+}
+
+fn load_from_file(filename: &str) -> Vec<Expense> {
+    let mut expenses = Vec::new();
+    match fs::read_to_string(filename) {
+        Ok(data) => {
+            for line in data.lines() {
+                let parts: Vec<&str> = line.split(',').collect();
+                if parts.len() == 3 {
+                    let name = parts[0].to_string();
+                    let amount: f64 = parts[1].parse().unwrap_or(0.0);
+                    let category = parts[2].to_string();
+                    expenses.push(Expense { name, amount, category });
+                }
+            }
+            println!("Data loaded from {}", filename);
+        }
+        Err(_) => println!("No existing data found."),
+    }
+    expenses
+}
+
 fn main() {
-    let mut expenses: Vec<Expense> = Vec::new();
+    let mut expenses = load_from_file("expenses.txt");
 
     loop {
         println!("\nFinance Tracker Menu:");
@@ -69,7 +101,8 @@ fn main() {
         println!("2. View All Expenses");
         println!("3. View Expenses by Category");
         println!("4. Total Expenses by Category");
-        println!("5. Exit");
+        println!("5. Save to File");
+        println!("6. Exit");
 
         let choice = get_input("Enter your choice:");
 
@@ -94,7 +127,14 @@ fn main() {
                 let total = total_by_category(&expenses, &category);
                 println!("Total for {}: Rp{}", category, format_currency(total));
             }
-            "5" => break,
+            "5" => {
+                save_to_file(&expenses, "expenses.txt");
+            }
+            "6" => {
+                save_to_file(&expenses, "expenses.txt");
+                println!("Exiting...");
+                break;
+            }
             _ => println!("Invalid choice, please try again."),
         }
     }

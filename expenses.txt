@@ -1,0 +1,3 @@
+Makan Siang,50000,Food
+Bensin,100000,Transport
+Buku,75000,Education
